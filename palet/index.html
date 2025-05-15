@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kleurenpalet Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100"> <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-indigo-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                PaletteGen
+            </div>
+            <div class="flex items-center">
+                <a href="#" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                <button id="theme-toggle" class="ml-4 p-2 rounded-md text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" aria-label="Thema wisselen">
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Kleurenpalet</h1>
+        <p class="text-center text-gray-600 mb-6">Klik op HEX/RGB om te kopiëren. Gebruik SPATIEBALK of de knop hieronder voor een nieuw palet.</p>
+
+        <div class="control-section">
+            <div class="mode-selector" id="mode-selector-group">
+                <input type="radio" id="mode-auto" name="palette-mode" value="automatic" checked>
+                <label for="mode-auto">Automatisch</label>
+
+                <input type="radio" id="mode-lock" name="palette-mode" value="lockPrimary">
+                <label for="mode-lock">Primaire Lock</label>
+
+                <input type="radio" id="mode-manual" name="palette-mode" value="manual">
+                <label for="mode-manual">Handmatig</label>
+            </div>
+
+            <div class="harmony-selector-container">
+                <label for="harmony-select">Kleurharmonie:</label>
+                <select id="harmony-select">
+                    <option value="monochromatic" selected>Monochromatic</option>
+                    <option value="achromatic">Achromatic</option>
+                    <option value="direct">Direct Harmony (Complementary)</option>
+                    <option value="split">Split Complementary</option>
+                    <option value="analogous">Analogous Harmony</option>
+                    <option value="triadic">Triadic Harmony</option>
+                    <option value="tetradic">Tetradic Harmony</option>
+                </select>
+            </div>
+        </div>
+
+
+        <section>
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Palet Overzicht</h2>
+            <div id="combined-swatch" class="combined-swatch">
+                <div id="combined-segment-1" class="combined-swatch-segment"></div>
+                <div id="combined-segment-2" class="combined-swatch-segment"></div>
+                <div id="combined-segment-3" class="combined-swatch-segment"></div>
+                <div id="combined-segment-4" class="combined-swatch-segment"></div>
+                <div id="combined-segment-5" class="combined-swatch-segment"></div>
+            </div>
+        </section>
+
+        <div class="md:hidden mb-6">
+            <button id="mobile-generate-button" class="mobile-generate-button w-full">
+                Nieuw Palet
+            </button>
+        </div>
+
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Hoofdkleuren</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="color-swatch-container">
+                    <div id="primary-color" class="color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Primair</span>
+                            <span id="primary-hex" class="swatch-text font-mono">#000000</span>
+                            <span id="primary-rgb" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="primary-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in (e.g., #FF5733)">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="secondary-color" class="color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Secundair</span>
+                            <span id="secondary-hex" class="swatch-text font-mono">#000000</span>
+                            <span id="secondary-rgb" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="secondary-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="tertiary-color" class="color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Tertiair</span>
+                            <span id="tertiary-hex" class="swatch-text font-mono">#000000</span>
+                            <span id="tertiary-rgb" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="tertiary-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="quaternary-color" class="color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Kwartair</span>
+                            <span id="quaternary-hex" class="swatch-text font-mono">#000000</span>
+                            <span id="quaternary-rgb" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="quaternary-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Blokkleuren (Achtergronden)</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+                <div class="color-swatch-container">
+                    <div id="block-1-color" class="color-swatch block-color-swatch">
+                        <div class="block-aa-text">Aa</div>
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Blok 1</span>
+                            <span id="block-hex-1" class="swatch-text font-mono">#000000</span>
+                            <span id="block-rgb-1" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="block-input-1" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="block-2-color" class="color-swatch block-color-swatch">
+                        <div class="block-aa-text">Aa</div>
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Blok 2</span>
+                            <span id="block-hex-2" class="swatch-text font-mono">#000000</span>
+                            <span id="block-rgb-2" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="block-input-2" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="block-3-color" class="color-swatch block-color-swatch">
+                        <div class="block-aa-text">Aa</div>
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Blok 3</span>
+                            <span id="block-hex-3" class="swatch-text font-mono">#000000</span>
+                            <span id="block-rgb-3" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="block-input-3" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="block-4-color" class="color-swatch block-color-swatch">
+                        <div class="block-aa-text">Aa</div>
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Blok 4</span>
+                            <span id="block-hex-4" class="swatch-text font-mono">#000000</span>
+                            <span id="block-rgb-4" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="block-input-4" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="block-5-color" class="color-swatch block-color-swatch">
+                        <div class="block-aa-text">Aa</div>
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Blok 5</span>
+                            <span id="block-hex-5" class="swatch-text font-mono">#000000</span>
+                            <span id="block-rgb-5" class="swatch-text font-mono">0 0 0</span>
+                        </div>
+                    </div>
+                    <input type="text" id="block-input-5" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="block-6-color" class="color-swatch block-color-swatch">
+                        <div class="block-aa-text">Aa</div>
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Blok 6</span>
+                            <span id="block-hex-6" class="swatch-text font-mono">#FFFFFF</span>
+                            <span id="block-rgb-6" class="swatch-text font-mono">255 255 255</span>
+                        </div>
+                    </div>
+                    <input type="text" id="block-input-6" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-300">
+
+        <section class="mb-10" id="text-colors-section">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Tekstkleuren</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+                <div class="color-swatch-container">
+                    <div id="text-color-1-color" class="color-swatch standard-color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Text-color-1</span>
+                            <span id="text-color-1-hex" class="swatch-text font-mono">#111111</span>
+                            <span id="text-color-1-rgb" class="swatch-text font-mono">17 17 17</span>
+                        </div>
+                    </div>
+                    <input type="text" id="text-color-1-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="text-color-2-color" class="color-swatch standard-color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Text-color-2</span>
+                            <span id="text-color-2-hex" class="swatch-text font-mono">#333333</span>
+                            <span id="text-color-2-rgb" class="swatch-text font-mono">51 51 51</span>
+                        </div>
+                    </div>
+                    <input type="text" id="text-color-2-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="text-color-3-color" class="color-swatch standard-color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Text-color-3</span>
+                            <span id="text-color-3-hex" class="swatch-text font-mono">#555555</span>
+                            <span id="text-color-3-rgb" class="swatch-text font-mono">85 85 85</span>
+                        </div>
+                    </div>
+                    <input type="text" id="text-color-3-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="text-color-4-color" class="color-swatch standard-color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Text-color-4</span>
+                            <span id="text-color-4-hex" class="swatch-text font-mono">#EEEEEE</span>
+                            <span id="text-color-4-rgb" class="swatch-text font-mono">238 238 238</span>
+                        </div>
+                    </div>
+                    <input type="text" id="text-color-4-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="text-color-5-color" class="color-swatch standard-color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Text-color-5</span>
+                            <span id="text-color-5-hex" class="swatch-text font-mono">#CCCCCC</span>
+                            <span id="text-color-5-rgb" class="swatch-text font-mono">204 204 204</span>
+                        </div>
+                    </div>
+                    <input type="text" id="text-color-5-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+                <div class="color-swatch-container">
+                    <div id="text-color-6-color" class="color-swatch standard-color-swatch">
+                        <div class="copy-message">Gekopieerd!</div>
+                        <div class="swatch-text-wrapper">
+                            <span class="swatch-text swatch-label">Text-color-6</span>
+                            <span id="text-color-6-hex" class="swatch-text font-mono">#AAAAAA</span>
+                            <span id="text-color-6-rgb" class="swatch-text font-mono">170 170 170</span>
+                        </div>
+                    </div>
+                    <input type="text" id="text-color-6-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}" title="Voer 6-digit HEX code in">
+                </div>
+            </div>
+        </section>
+        <section id="standard-colors-section">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Standaard Kleuren</h2>
+
+            <div class="mb-10">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Grijstinten</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+                    <div class="color-swatch-container">
+                        <div id="grey-tone-1-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Grey-tone-1</span>
+                                <span id="grey-tone-1-hex" class="swatch-text font-mono">#F8F8F8</span>
+                                <span id="grey-tone-1-rgb" class="swatch-text font-mono">248 248 248</span>
+                            </div>
+                        </div>
+                        <input type="text" id="grey-tone-1-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="grey-tone-2-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Grey-tone-2</span>
+                                <span id="grey-tone-2-hex" class="swatch-text font-mono">#F2F2F2</span>
+                                <span id="grey-tone-2-rgb" class="swatch-text font-mono">242 242 242</span>
+                            </div>
+                        </div>
+                        <input type="text" id="grey-tone-2-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="grey-tone-3-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Grey-tone-3</span>
+                                <span id="grey-tone-3-hex" class="swatch-text font-mono">#DADADA</span>
+                                <span id="grey-tone-3-rgb" class="swatch-text font-mono">218 218 218</span>
+                            </div>
+                        </div>
+                        <input type="text" id="grey-tone-3-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="grey-tone-4-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Grey-tone-4</span>
+                                <span id="grey-tone-4-hex" class="swatch-text font-mono">#999999</span>
+                                <span id="grey-tone-4-rgb" class="swatch-text font-mono">153 153 153</span>
+                            </div>
+                        </div>
+                        <input type="text" id="grey-tone-4-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="grey-tone-5-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Grey-tone-5</span>
+                                <span id="grey-tone-5-hex" class="swatch-text font-mono">#807F7F</span>
+                                <span id="grey-tone-5-rgb" class="swatch-text font-mono">128 127 127</span>
+                            </div>
+                        </div>
+                        <input type="text" id="grey-tone-5-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="grey-tone-6-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Grey-tone-6</span>
+                                <span id="grey-tone-6-hex" class="swatch-text font-mono">#5A5A5A</span>
+                                <span id="grey-tone-6-rgb" class="swatch-text font-mono">90 90 90</span>
+                            </div>
+                        </div>
+                        <input type="text" id="grey-tone-6-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Alerts</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+                        <div class="color-swatch-container">
+                            <div id="alert-danger-color" class="color-swatch standard-color-swatch">
+                                <div class="copy-message">Gekopieerd!</div>
+                                <div class="swatch-text-wrapper">
+                                    <span class="swatch-text swatch-label">Danger</span>
+                                    <span id="alert-danger-hex" class="swatch-text font-mono">#FA4747</span>
+                                    <span id="alert-danger-rgb" class="swatch-text font-mono">250 71 71</span>
+                                </div>
+                            </div>
+                            <input type="text" id="alert-danger-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        </div>
+                        <div class="color-swatch-container">
+                            <div id="alert-warning-color" class="color-swatch standard-color-swatch">
+                                <div class="copy-message">Gekopieerd!</div>
+                                <div class="swatch-text-wrapper">
+                                    <span class="swatch-text swatch-label">Warning</span>
+                                    <span id="alert-warning-hex" class="swatch-text font-mono">#FFBD12</span>
+                                    <span id="alert-warning-rgb" class="swatch-text font-mono">255 189 18</span>
+                                </div>
+                            </div>
+                            <input type="text" id="alert-warning-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        </div>
+                        <div class="color-swatch-container">
+                            <div id="alert-primary-color" class="color-swatch standard-color-swatch">
+                                <div class="copy-message">Gekopieerd!</div>
+                                <div class="swatch-text-wrapper">
+                                    <span class="swatch-text swatch-label">Primary (Alert)</span>
+                                    <span id="alert-primary-hex" class="swatch-text font-mono">#28BAFD</span>
+                                    <span id="alert-primary-rgb" class="swatch-text font-mono">40 186 253</span>
+                                </div>
+                            </div>
+                            <input type="text" id="alert-primary-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        </div>
+                        <div class="color-swatch-container">
+                            <div id="alert-success-color" class="color-swatch standard-color-swatch">
+                                <div class="copy-message">Gekopieerd!</div>
+                                <div class="swatch-text-wrapper">
+                                    <span class="swatch-text swatch-label">Success</span>
+                                    <span id="alert-success-hex" class="swatch-text font-mono">#39DF76</span>
+                                    <span id="alert-success-rgb" class="swatch-text font-mono">57 223 118</span>
+                                </div>
+                            </div>
+                            <input type="text" id="alert-success-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        </div>
+                        <div class="color-swatch-container">
+                            <div id="alert-neutral-color" class="color-swatch standard-color-swatch">
+                                <div class="copy-message">Gekopieerd!</div>
+                                <div class="swatch-text-wrapper">
+                                    <span class="swatch-text swatch-label">Neutral</span>
+                                    <span id="alert-neutral-hex" class="swatch-text font-mono">#8E8E9A</span>
+                                    <span id="alert-neutral-rgb" class="swatch-text font-mono">142 142 154</span>
+                                </div>
+                            </div>
+                            <input type="text" id="alert-neutral-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        </div>
+                </div>
+            </div>
+
+            <div> 
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Globale Kleuren</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"> 
+                    <div class="color-swatch-container">
+                        <div id="global-nav-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Nav-color</span>
+                                <span id="global-nav-hex" class="swatch-text font-mono">#E1E1E1</span>
+                                <span id="global-nav-rgb" class="swatch-text font-mono">225 225 225</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-nav-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="global-footer-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Footer-color</span>
+                                <span id="global-footer-hex" class="swatch-text font-mono">#F1F2DD</span>
+                                <span id="global-footer-rgb" class="swatch-text font-mono">241 242 221</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-footer-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="global-site-bg-1-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Site-bg-color-1</span>
+                                <span id="global-site-bg-1-hex" class="swatch-text font-mono">#FFFFFF</span>
+                                <span id="global-site-bg-1-rgb" class="swatch-text font-mono">255 255 255</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-site-bg-1-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="global-site-bg-2-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Site-bg-color-2</span>
+                                <span id="global-site-bg-2-hex" class="swatch-text font-mono">#000000</span>
+                                <span id="global-site-bg-2-rgb" class="swatch-text font-mono">0 0 0</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-site-bg-2-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="file-io-section">
+            <div class="file-io-controls md:flex md:items-end md:gap-3">
+                <div class="flex-grow">
+                    <label for="palette-name">Palet Naam:</label>
+                    <input type="text" id="palette-name" placeholder="Mijn Monochromatisch Palet">
+                </div>
+                <div class="mt-3 md:mt-0 md:ml-2">
+                    <button id="export-json-button">Exporteer als JSON</button>
+                </div>
+                <div class="mt-3 md:mt-0">
+                    <input type="file" id="import-json-input" accept=".json">
+                    <button id="import-json-button">Importeer JSON</button>
+                </div>
+            </div>
+        </section>
+
+        <div id="instruction" class="hidden md:block">Druk op SPATIEBALK voor een nieuw palet</div>
+
+    </main>
+
+    <script defer src="script.js"></script>
+</body>
+</html>

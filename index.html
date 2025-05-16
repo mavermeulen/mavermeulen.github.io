@@ -10,7 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100"> <header class="bg-white shadow-md sticky top-0 z-50">
+<body class="bg-gray-100">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <div class="text-xl font-bold text-indigo-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -135,7 +137,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
                 <div class="color-swatch-container">
                     <div id="block-1-color" class="color-swatch block-color-swatch">
-                        <div class="block-aa-text">Aa</div>
+                        <div class="block-aa-text" data-block-id="1">Aa</div>
                         <div class="copy-message">Gekopieerd!</div>
                         <div class="swatch-text-wrapper">
                             <span class="swatch-text swatch-label">Blok 1</span>
@@ -147,7 +149,7 @@
                 </div>
                 <div class="color-swatch-container">
                     <div id="block-2-color" class="color-swatch block-color-swatch">
-                        <div class="block-aa-text">Aa</div>
+                        <div class="block-aa-text" data-block-id="2">Aa</div>
                         <div class="copy-message">Gekopieerd!</div>
                         <div class="swatch-text-wrapper">
                             <span class="swatch-text swatch-label">Blok 2</span>
@@ -159,7 +161,7 @@
                 </div>
                 <div class="color-swatch-container">
                     <div id="block-3-color" class="color-swatch block-color-swatch">
-                        <div class="block-aa-text">Aa</div>
+                        <div class="block-aa-text" data-block-id="3">Aa</div>
                         <div class="copy-message">Gekopieerd!</div>
                         <div class="swatch-text-wrapper">
                             <span class="swatch-text swatch-label">Blok 3</span>
@@ -171,7 +173,7 @@
                 </div>
                 <div class="color-swatch-container">
                     <div id="block-4-color" class="color-swatch block-color-swatch">
-                        <div class="block-aa-text">Aa</div>
+                        <div class="block-aa-text" data-block-id="4">Aa</div>
                         <div class="copy-message">Gekopieerd!</div>
                         <div class="swatch-text-wrapper">
                             <span class="swatch-text swatch-label">Blok 4</span>
@@ -183,7 +185,7 @@
                 </div>
                 <div class="color-swatch-container">
                     <div id="block-5-color" class="color-swatch block-color-swatch">
-                        <div class="block-aa-text">Aa</div>
+                        <div class="block-aa-text" data-block-id="5">Aa</div>
                         <div class="copy-message">Gekopieerd!</div>
                         <div class="swatch-text-wrapper">
                             <span class="swatch-text swatch-label">Blok 5</span>
@@ -195,7 +197,7 @@
                 </div>
                 <div class="color-swatch-container">
                     <div id="block-6-color" class="color-swatch block-color-swatch">
-                        <div class="block-aa-text">Aa</div>
+                        <div class="block-aa-text" data-block-id="6">Aa</div>
                         <div class="copy-message">Gekopieerd!</div>
                         <div class="swatch-text-wrapper">
                             <span class="swatch-text swatch-label">Blok 6</span>
@@ -281,9 +283,9 @@
                 </div>
             </div>
         </section>
+
         <section id="standard-colors-section">
             <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Standaard Kleuren</h2>
-
             <div class="mb-10">
                 <h3 class="text-xl font-semibold text-gray-700 mb-4">Grijstinten</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
@@ -417,56 +419,99 @@
                 </div>
             </div>
 
-            <div> 
+            <div id="global-colors-section">
                 <h3 class="text-xl font-semibold text-gray-700 mb-4">Globale Kleuren</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"> 
-                    <div class="color-swatch-container">
-                        <div id="global-nav-color" class="color-swatch standard-color-swatch">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6"> <div class="color-swatch-container">
+                        <div id="global-nav-bg-color-color" class="color-swatch standard-color-swatch">
                             <div class="copy-message">Gekopieerd!</div>
                             <div class="swatch-text-wrapper">
-                                <span class="swatch-text swatch-label">Nav-color</span>
-                                <span id="global-nav-hex" class="swatch-text font-mono">#E1E1E1</span>
-                                <span id="global-nav-rgb" class="swatch-text font-mono">225 225 225</span>
+                                <span class="swatch-text swatch-label">Nav-bg-color</span>
+                                <span id="global-nav-bg-color-hex" class="swatch-text font-mono">#E1E1E1</span>
+                                <span id="global-nav-bg-color-rgb" class="swatch-text font-mono">225 225 225</span>
                             </div>
                         </div>
-                        <input type="text" id="global-nav-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        <input type="text" id="global-nav-bg-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
                     </div>
                     <div class="color-swatch-container">
-                        <div id="global-footer-color" class="color-swatch standard-color-swatch">
+                        <div id="global-nav-text-color-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Nav-text-color</span>
+                                <span id="global-nav-text-color-hex" class="swatch-text font-mono">#333333</span>
+                                <span id="global-nav-text-color-rgb" class="swatch-text font-mono">51 51 51</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-nav-text-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="global-footer-color-color" class="color-swatch standard-color-swatch">
                             <div class="copy-message">Gekopieerd!</div>
                             <div class="swatch-text-wrapper">
                                 <span class="swatch-text swatch-label">Footer-color</span>
-                                <span id="global-footer-hex" class="swatch-text font-mono">#F1F2DD</span>
-                                <span id="global-footer-rgb" class="swatch-text font-mono">241 242 221</span>
+                                <span id="global-footer-color-hex" class="swatch-text font-mono">#F1F2DD</span>
+                                <span id="global-footer-color-rgb" class="swatch-text font-mono">241 242 221</span>
                             </div>
                         </div>
-                        <input type="text" id="global-footer-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        <input type="text" id="global-footer-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
                     </div>
                     <div class="color-swatch-container">
-                        <div id="global-site-bg-1-color" class="color-swatch standard-color-swatch">
+                        <div id="global-footer-text-color-color" class="color-swatch standard-color-swatch">
                             <div class="copy-message">Gekopieerd!</div>
                             <div class="swatch-text-wrapper">
-                                <span class="swatch-text swatch-label">Site-bg-color-1</span>
-                                <span id="global-site-bg-1-hex" class="swatch-text font-mono">#FFFFFF</span>
-                                <span id="global-site-bg-1-rgb" class="swatch-text font-mono">255 255 255</span>
+                                <span class="swatch-text swatch-label">Footer-text-color</span>
+                                <span id="global-footer-text-color-hex" class="swatch-text font-mono">#4A4A4A</span>
+                                <span id="global-footer-text-color-rgb" class="swatch-text font-mono">74 74 74</span>
                             </div>
                         </div>
-                        <input type="text" id="global-site-bg-1-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        <input type="text" id="global-footer-text-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
                     </div>
                     <div class="color-swatch-container">
-                        <div id="global-site-bg-2-color" class="color-swatch standard-color-swatch">
+                        <div id="global-button-background-color-color" class="color-swatch standard-color-swatch">
                             <div class="copy-message">Gekopieerd!</div>
                             <div class="swatch-text-wrapper">
-                                <span class="swatch-text swatch-label">Site-bg-color-2</span>
-                                <span id="global-site-bg-2-hex" class="swatch-text font-mono">#000000</span>
-                                <span id="global-site-bg-2-rgb" class="swatch-text font-mono">0 0 0</span>
+                                <span class="swatch-text swatch-label">Button-bg-color</span>
+                                <span id="global-button-background-color-hex" class="swatch-text font-mono">#4F46E5</span>
+                                <span id="global-button-background-color-rgb" class="swatch-text font-mono">79 70 229</span>
                             </div>
                         </div>
-                        <input type="text" id="global-site-bg-2-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                        <input type="text" id="global-button-background-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
                     </div>
-                </div>
+                    <div class="color-swatch-container">
+                        <div id="global-button-background-color-hover-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Button-bg-hover</span>
+                                <span id="global-button-background-color-hover-hex" class="swatch-text font-mono">#4338CA</span>
+                                <span id="global-button-background-color-hover-rgb" class="swatch-text font-mono">67 56 202</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-button-background-color-hover-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="global-button-text-color-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Button-text-color</span>
+                                <span id="global-button-text-color-hex" class="swatch-text font-mono">#FFFFFF</span>
+                                <span id="global-button-text-color-rgb" class="swatch-text font-mono">255 255 255</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-button-text-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    <div class="color-swatch-container">
+                        <div id="global-site-bg-color-color" class="color-swatch standard-color-swatch">
+                            <div class="copy-message">Gekopieerd!</div>
+                            <div class="swatch-text-wrapper">
+                                <span class="swatch-text swatch-label">Site-bg-color</span>
+                                <span id="global-site-bg-color-hex" class="swatch-text font-mono">#F3F4F6</span>
+                                <span id="global-site-bg-color-rgb" class="swatch-text font-mono">243 244 246</span>
+                            </div>
+                        </div>
+                        <input type="text" id="global-site-bg-color-input" class="swatch-input" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                    </div>
             </div>
-        </section>
+            </section>
 
 
         <section class="file-io-section">
@@ -488,6 +533,19 @@
         <div id="instruction" class="hidden md:block">Druk op SPATIEBALK voor een nieuw palet</div>
 
     </main>
+
+    <div id="readability-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden items-center justify-center p-4 z-[60]">
+        <div id="modal-content" class="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full relative">
+            <button id="modal-close-button" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-2xl leading-none" aria-label="Sluiten">
+                &times;
+            </button>
+            <h3 id="modal-title" class="text-2xl font-bold mb-4">Leesbaarheid Test</h3>
+            <div id="modal-text-content" class="space-y-3">
+                <p id="modal-paragraph-1">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                <p id="modal-paragraph-2">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            </div>
+        </div>
+    </div>
 
     <script defer src="script.js"></script>
 </body>

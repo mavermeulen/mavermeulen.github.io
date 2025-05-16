@@ -8,9 +8,18 @@ const themeToggle = document.getElementById('theme-toggle');
 const themeIconLight = document.getElementById('theme-icon-light');
 const themeIconDark = document.getElementById('theme-icon-dark');
 
+// Modal variabelen
+const readabilityModal = document.getElementById('readability-modal');
+const modalContent = document.getElementById('modal-content');
+const modalCloseButton = document.getElementById('modal-close-button');
+const modalTitleElement = document.getElementById('modal-title');
+const modalParagraph1 = document.getElementById('modal-paragraph-1');
+const modalParagraph2 = document.getElementById('modal-paragraph-2');
+
+
 // Standaardwaarden voor de "Standaard Kleuren" sectie
 const defaultStandardColors = {
-    // Nieuwe Tekstkleuren
+    // Tekstkleuren
     'text-color-1': { hex: '#111111', label: 'Text-color-1' },
     'text-color-2': { hex: '#333333', label: 'Text-color-2' },
     'text-color-3': { hex: '#555555', label: 'Text-color-3' },
@@ -30,14 +39,18 @@ const defaultStandardColors = {
     'alert-primary': { hex: '#28BAFD', label: 'Primary (Alert)' },
     'alert-success': { hex: '#39DF76', label: 'Success' },
     'alert-neutral': { hex: '#8E8E9A', label: 'Neutral' },
-    // Globale kleuren (zonder de oude text-colors)
-    'global-nav': { hex: '#E1E1E1', label: 'Nav-color' },
-    'global-footer': { hex: '#F1F2DD', label: 'Footer-color' },
-    'global-site-bg-1': { hex: '#FFFFFF', label: 'Site-bg-color-1' },
-    'global-site-bg-2': { hex: '#000000', label: 'Site-bg-color-2' }
+    // Bijgewerkte Globale kleuren
+    'global-nav-bg-color': { hex: '#E1E1E1', label: 'Nav-bg-color' },
+    'global-nav-text-color': { hex: '#333333', label: 'Nav-text-color' },
+    'global-footer-color': { hex: '#F1F2DD', label: 'Footer-color' },
+    'global-footer-text-color': { hex: '#4A4A4A', label: 'Footer-text-color' },
+    'global-button-background-color': { hex: '#4F46E5', label: 'Button-bg-color' },
+    'global-button-background-color-hover': { hex: '#4338CA', label: 'Button-bg-hover' },
+    'global-button-text-color': { hex: '#FFFFFF', label: 'Button-text-color' },
+    'global-site-bg-color': { hex: '#FFFFFF', label: 'Site-bg-color' }, // Hernoemd en standaard naar wit
 };
 
-// Basis ID's voor alle kleurvakken, inclusief standaardkleuren en nieuwe tekstkleuren
+// Basis ID's voor alle kleurvakken
 const swatchBaseIds = [
     'primary', 'secondary', 'tertiary', 'quaternary',
     'block-1', 'block-2', 'block-3', 'block-4', 'block-5', 'block-6',
@@ -48,39 +61,73 @@ const swatchBaseIds = [
 const jsonTypeToIdMap = {
     "Primary": "primary", "Secondary": "secondary", "Tertiary": "tertiary", "Quaternary": "quaternary",
     "Section-bg-one": "block-1", "Section-bg-two": "block-2", "Section-bg-three": "block-3",
-    "Section-bg-four": "block-4", "Section-bg-five": "block-5", "Section-bg-white": "block-6",
+    "Section-bg-four": "block-4", "Section-bg-five": "block-5", "Section-bg-white": "block-6", // Label voor block-6 blijft "Section-bg-white" voor compatibiliteit
     "Text-color-1": "text-color-1", "Text-color-2": "text-color-2", "Text-color-3": "text-color-3",
     "Text-color-4": "text-color-4", "Text-color-5": "text-color-5", "Text-color-6": "text-color-6",
     "Grey-tone-1": "grey-tone-1", "Grey-tone-2": "grey-tone-2", "Grey-tone-3": "grey-tone-3",
     "Grey-tone-4": "grey-tone-4", "Grey-tone-5": "grey-tone-5", "Grey-tone-6": "grey-tone-6",
     "Danger": "alert-danger", "Warning": "alert-warning", "Primary (Alert)": "alert-primary",
     "Success": "alert-success", "Neutral": "alert-neutral",
-    "Nav-color": "global-nav", "Footer-color": "global-footer",
-    "Site-bg-color-1": "global-site-bg-1", "Site-bg-color-2": "global-site-bg-2"
+    "Nav-bg-color": "global-nav-bg-color",
+    "Nav-text-color": "global-nav-text-color",
+    "Footer-color": "global-footer-color",
+    "Footer-text-color": "global-footer-text-color",
+    "Button-bg-color": "global-button-background-color",
+    "Button-bg-hover": "global-button-background-color-hover",
+    "Button-text-color": "global-button-text-color",
+    "Site-bg-color": "global-site-bg-color", // Nieuwe mapping
 };
 const idToJsonTypeMap = Object.fromEntries(Object.entries(jsonTypeToIdMap).map(([key, value]) => [value, key]));
 
 
 // --- Thema Functies ---
-/**
- * Past het thema toe op de pagina.
- * @param {string} theme - Het thema om toe te passen ('light' of 'dark').
- */
 function applyTheme(theme) {
+    const htmlElement = document.documentElement;
+    const bodyElement = document.body;
+
     if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
+        htmlElement.classList.add('dark');
         if (themeIconLight) themeIconLight.classList.add('hidden');
         if (themeIconDark) themeIconDark.classList.remove('hidden');
+        // Pas de donkere achtergrondkleur toe als die gedefinieerd is
+        if (currentPalette && currentPalette['global-site-bg-color'] && defaultStandardColors['global-site-bg-color-dark']) { // Check of de dark variant bestaat
+             // Voor nu gebruiken we de CSS :root variabelen of directe styling via html.dark
+        } else {
+            // Fallback als de specifieke donkere site bg niet is ingesteld in het palet
+            // De .dark class op body regelt dit via CSS
+        }
     } else {
-        document.documentElement.classList.remove('dark');
+        htmlElement.classList.remove('dark');
         if (themeIconLight) themeIconLight.classList.remove('hidden');
         if (themeIconDark) themeIconDark.classList.add('hidden');
+        // Pas de lichte achtergrondkleur toe
+        if (currentPalette && currentPalette['global-site-bg-color']) {
+            bodyElement.style.backgroundColor = currentPalette['global-site-bg-color'].hex;
+        }
+    }
+    // Update body background color based on the new global-site-bg-color and current theme
+    updateBodyBackgroundColor();
+}
+
+function updateBodyBackgroundColor() {
+    const bodyElement = document.body;
+    const isDarkMode = document.documentElement.classList.contains('dark');
+
+    if (isDarkMode) {
+        // In dark mode, de CSS `html.dark body` regelt de achtergrond.
+        // We kunnen hier eventueel een specifieke 'site-bg-dark' uit het palet gebruiken als die bestaat.
+        // Voor nu laten we de CSS dit afhandelen.
+        bodyElement.style.backgroundColor = ''; // Reset inline style zodat CSS class werkt
+    } else {
+        if (currentPalette && currentPalette['global-site-bg-color'] && currentPalette['global-site-bg-color'].hex) {
+            bodyElement.style.backgroundColor = currentPalette['global-site-bg-color'].hex;
+        } else {
+            bodyElement.style.backgroundColor = defaultStandardColors['global-site-bg-color'].hex; // Fallback
+        }
     }
 }
 
-/**
- * Wisselt het huidige thema en slaat de voorkeur op.
- */
+
 function toggleTheme() {
     const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -88,9 +135,6 @@ function toggleTheme() {
     applyTheme(newTheme);
 }
 
-/**
- * Initialiseert het thema op basis van opgeslagen voorkeur of systeemvoorkeur.
- */
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -100,8 +144,62 @@ function initializeTheme() {
     } else if (prefersDark) {
         applyTheme('dark');
     } else {
-        applyTheme('light'); // Standaard naar licht thema als er geen voorkeur is
+        applyTheme('light');
     }
+}
+
+// --- Modal Functies ---
+function openReadabilityModal(backgroundColorHex, textColorHex) {
+    if (!readabilityModal || !modalContent || !modalTitleElement || !modalParagraph1 || !modalParagraph2) {
+        console.error("Modal elements not found!");
+        return;
+    }
+
+    modalContent.style.backgroundColor = backgroundColorHex;
+    modalTitleElement.style.color = textColorHex;
+    modalParagraph1.style.color = textColorHex;
+    modalParagraph2.style.color = textColorHex;
+
+    const modalBgRgb = hexToRgb(backgroundColorHex);
+    if (modalBgRgb && modalCloseButton) { 
+        const closeButtonContrastColor = getContrastColor(modalBgRgb[0], modalBgRgb[1], modalBgRgb[2]);
+        modalCloseButton.style.color = closeButtonContrastColor;
+    }
+
+    readabilityModal.classList.remove('hidden');
+    readabilityModal.classList.add('flex'); 
+}
+
+function closeReadabilityModal() {
+    if (!readabilityModal) return;
+    readabilityModal.classList.add('hidden');
+    readabilityModal.classList.remove('flex');
+}
+
+// --- 3D Hover Effect Functie ---
+function add3DHoverEffect(element) {
+    const intensity = 10; 
+
+    element.addEventListener('mousemove', (e) => {
+        const rect = element.getBoundingClientRect();
+        const x = e.clientX - rect.left; 
+        const y = e.clientY - rect.top;  
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const deltaX = x - centerX;
+        const deltaY = y - centerY;
+
+        const rotateY = (deltaX / centerX) * intensity;
+        const rotateX = -(deltaY / centerY) * intensity; 
+
+        element.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`; 
+    });
+
+    element.addEventListener('mouseleave', () => {
+        element.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)'; 
+    });
 }
 
 
@@ -141,6 +239,10 @@ function initializeCurrentPaletteWithDefaults() {
         currentPalette.tertiary = dynamicParts.tertiary;
         currentPalette.quaternary = dynamicParts.quaternary;
         currentPalette.blocks = [...dynamicParts.blocks];
+        // Koppel global-site-bg-color aan block-6
+        if (currentPalette.blocks[5]) {
+            currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5])); // Diepe kopie
+        }
     } else { 
         const fallbackDynamic = generateDynamicPaletteParts(null, 'monochromatic');
         currentPalette.primary = fallbackDynamic.primary;
@@ -148,7 +250,11 @@ function initializeCurrentPaletteWithDefaults() {
         currentPalette.tertiary = fallbackDynamic.tertiary;
         currentPalette.quaternary = fallbackDynamic.quaternary;
         currentPalette.blocks = [...fallbackDynamic.blocks];
+        if (currentPalette.blocks[5]) {
+            currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
+        }
     }
+    updateBodyBackgroundColor(); // Pas body achtergrond aan na initialisatie
 }
 
 function generateDynamicPaletteParts(lockedPrimaryHsl = null, harmonyType = currentColorHarmony) {
@@ -237,7 +343,7 @@ function generateDynamicPaletteParts(lockedPrimaryHsl = null, harmonyType = curr
         dynamicPalette.blocks.push(generateColor(qHue, getRandomInt(Math.max(10, qSat - 35), qSat -20), getRandomInt(Math.max(20, qLight - 30), Math.max(30, qLight -20))));
         dynamicPalette.blocks.push(generateColor(pHueGen, getRandomInt(15, 30), getRandomInt(90, 96)));
         if (Math.random() < 0.15) { dynamicPalette.blocks.push(generateColor(pHueGen, getRandomInt(0, 5), getRandomInt(98, 99))); }
-        else { dynamicPalette.blocks.push(generateColor(0, 0, 100)); }
+        else { dynamicPalette.blocks.push(generateColor(0, 0, 100)); } // Default block-6 to white
     }
     dynamicPalette.blocks = dynamicPalette.blocks.filter(Boolean);
     while (dynamicPalette.blocks.length < 6) {
@@ -293,20 +399,25 @@ function updateSwatchUI(baseId, colorData) {
     rgbElement.onclick = null; 
     rgbElement.onclick = (event) => { event.stopPropagation(); copyToClipboard(colorData.rgbSpaceString, swatchElement, "RGB"); };
 
-    // Update "Aa" text color for block swatches
     if (baseId.startsWith('block-')) {
-        const blockIndex = baseId.split('-')[1]; // e.g., "1" from "block-1"
+        const blockIndex = baseId.split('-')[1]; 
         const aaTextElement = swatchElement.querySelector('.block-aa-text');
         if (aaTextElement) {
             const correspondingTextColorId = `text-color-${blockIndex}`;
             if (currentPalette[correspondingTextColorId] && currentPalette[correspondingTextColorId].hex) {
                 aaTextElement.style.color = currentPalette[correspondingTextColorId].hex;
             } else {
-                aaTextElement.style.color = '#000000'; // Fallback color if text-color-X is not found
+                aaTextElement.style.color = '#000000'; 
                 console.warn(`Corresponding text color ${correspondingTextColorId} not found for ${baseId}. Aa text set to black.`);
             }
         }
     }
+    
+    // Als global-site-bg-color wordt bijgewerkt, update de body achtergrond
+    if (baseId === 'global-site-bg-color') {
+        updateBodyBackgroundColor();
+    }
+
 
     const isStandardColor = defaultStandardColors.hasOwnProperty(baseId);
     if (isStandardColor) { 
@@ -352,6 +463,7 @@ function updateUI(paletteToDisplay) {
         }
     });
     updateCombinedSwatch();
+    updateBodyBackgroundColor(); // Zorg ervoor dat de body achtergrond ook wordt bijgewerkt
 }
 
 
@@ -424,7 +536,7 @@ function importPaletteFromJson(event) {
             } else { harmonySelect.value = 'monochromatic'; currentColorHarmony = 'monochromatic'; }
 
             const newImportedPalette = {};
-            initializeCurrentPaletteWithDefaults();
+            initializeCurrentPaletteWithDefaults(); 
             Object.assign(newImportedPalette, currentPalette); 
 
             let allColorsValid = true;
@@ -451,19 +563,28 @@ function importPaletteFromJson(event) {
                     if (index >= 0 && index < 6) {
                         if (!newImportedPalette.blocks) newImportedPalette.blocks = new Array(6).fill(null);
                         newImportedPalette.blocks[index] = colorData;
+                        // Als block-6 wordt geïmporteerd, update ook global-site-bg-color
+                        if (baseId === 'block-6') {
+                            newImportedPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(colorData));
+                        }
                     } else {
                         allColorsValid = false; console.warn(`Ongeldige block index voor ${baseId}`);
                     }
                 } else {
                     newImportedPalette[baseId] = colorData;
+                     // Als global-site-bg-color wordt geïmporteerd, update ook block-6
+                    if (baseId === 'global-site-bg-color') {
+                        if (!newImportedPalette.blocks) newImportedPalette.blocks = new Array(6).fill(null);
+                        newImportedPalette.blocks[5] = JSON.parse(JSON.stringify(colorData));
+                    }
                 }
             });
 
             const dynamicColorKeys = ['primary', 'secondary', 'tertiary', 'quaternary'];
             dynamicColorKeys.forEach(key => {
-                if (!newImportedPalette[key]) {
+                if (!newImportedPalette[key]) { 
                     allColorsValid = false;
-                    console.error(`Hoofdkleur ${key} mist in JSON. Probeer opnieuw te genereren.`);
+                    console.warn(`Hoofdkleur ${key} mist in JSON. Standaardwaarde wordt behouden of opnieuw gegenereerd indien nodig.`);
                 }
             });
             if (!newImportedPalette.blocks || newImportedPalette.blocks.length !== 6 || newImportedPalette.blocks.some(b => !b)) {
@@ -471,15 +592,23 @@ function importPaletteFromJson(event) {
                 const primaryHSLForBlockRegen = newImportedPalette.primary ? newImportedPalette.primary.hsl : null;
                 const tempDynamicParts = generateDynamicPaletteParts(primaryHSLForBlockRegen, currentColorHarmony);
                 newImportedPalette.blocks = tempDynamicParts.blocks;
+                if (newImportedPalette.blocks[5]) { // Zorg dat global-site-bg-color gesynchroniseerd blijft
+                    newImportedPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(newImportedPalette.blocks[5]));
+                }
                 if (!newImportedPalette.blocks || newImportedPalette.blocks.length !== 6 || newImportedPalette.blocks.some(b => !b)) {
                     allColorsValid = false; console.error("Herstel van blokkleuren mislukt.");
                 }
             }
 
-            if (!allColorsValid) { throw new Error("Een of meerdere kleuren in JSON zijn ongeldig of missen en konden niet worden hersteld."); }
+            if (!allColorsValid && !confirm("Sommige kleuren in het JSON-bestand waren ongeldig of ontbraken. Standaardwaarden worden gebruikt. Toch doorgaan met importeren?")) {
+                 event.target.value = null; 
+                 return; 
+            }
             currentPalette = newImportedPalette;
             setMode('manual'); updateUI(currentPalette);
-            alert("Palet succesvol geïmporteerd!");
+            if(allColorsValid) alert("Palet succesvol geïmporteerd!");
+            else alert("Palet geïmporteerd met enkele aanpassingen vanwege ongeldige of missende data.");
+
         } catch (error) {
             console.error("Fout bij importeren JSON:", error); alert(`Fout bij importeren: ${error.message}`);
         } finally { event.target.value = null; }
@@ -500,6 +629,9 @@ function handleHarmonyChange(event) {
     currentPalette.tertiary = dynamicParts.tertiary;
     currentPalette.quaternary = dynamicParts.quaternary;
     currentPalette.blocks = [...dynamicParts.blocks];
+    if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6
+        currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
+    }
     updateUI(currentPalette);
 }
 
@@ -544,12 +676,24 @@ function handleManualInputChange(event) {
         const index = parseInt(baseId.split('-')[1], 10) - 1;
         if (currentPalette.blocks && index >= 0 && index < currentPalette.blocks.length) {
             currentPalette.blocks[index] = colorData;
+            // Als block-6 verandert, update global-site-bg-color
+            if (baseId === 'block-6') {
+                currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(colorData));
+                updateSwatchUI('global-site-bg-color', currentPalette['global-site-bg-color']);
+            }
         } else {
             console.error(`Invalid block index or blocks array not initialized for ${baseId}`);
             return;
         }
     } else {
         currentPalette[baseId] = colorData;
+        // Als global-site-bg-color verandert, update block-6
+        if (baseId === 'global-site-bg-color') {
+            if (currentPalette.blocks && currentPalette.blocks[5]) {
+                currentPalette.blocks[5] = JSON.parse(JSON.stringify(colorData));
+                updateSwatchUI('block-6', currentPalette.blocks[5]);
+            }
+        }
     }
 
     updateSwatchUI(baseId, colorData); 
@@ -561,6 +705,9 @@ function handleManualInputChange(event) {
         currentPalette.tertiary = dynamicParts.tertiary;
         currentPalette.quaternary = dynamicParts.quaternary;
         currentPalette.blocks = [...dynamicParts.blocks];
+        if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6 na regeneratie
+            currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
+        }
         updateUI(currentPalette); 
     } 
     else if (baseId.startsWith('text-color-')) {
@@ -571,7 +718,7 @@ function handleManualInputChange(event) {
         if (blockSwatchElement && currentPalette.blocks[parseInt(textIndex, 10) - 1]) {
             const aaTextElement = blockSwatchElement.querySelector('.block-aa-text');
             if (aaTextElement) {
-                aaTextElement.style.color = colorData.hex; // Update "Aa" met de nieuwe tekstkleur
+                aaTextElement.style.color = colorData.hex; 
             }
         }
     } 
@@ -620,6 +767,9 @@ function triggerPaletteGeneration() {
     currentPalette.tertiary = dynamicParts.tertiary;
     currentPalette.quaternary = dynamicParts.quaternary;
     currentPalette.blocks = [...dynamicParts.blocks];
+    if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6
+        currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
+    }
 
     updateUI(currentPalette);
     const instructionElement = document.getElementById('instruction');
@@ -634,16 +784,47 @@ function handleKeyPress(event) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeTheme(); // Initialiseer thema bij laden
+    initializeTheme(); 
     document.body.tabIndex = -1; 
 
-    initializeCurrentPaletteWithDefaults();
-    updateUI(currentPalette);
+    initializeCurrentPaletteWithDefaults(); // Dit roept ook updateBodyBackgroundColor aan
+    updateUI(currentPalette); // updateUI roept ook updateBodyBackgroundColor aan
     setMode('automatic'); 
 
-    if (themeToggle) { // Voeg listener toe als de knop bestaat
+    if (themeToggle) { 
         themeToggle.addEventListener('click', toggleTheme);
     }
+
+    if (modalCloseButton) {
+        modalCloseButton.addEventListener('click', closeReadabilityModal);
+    }
+    if (readabilityModal) {
+        readabilityModal.addEventListener('click', (event) => {
+            if (event.target === readabilityModal) {
+                closeReadabilityModal();
+            }
+        });
+    }
+
+    document.querySelectorAll('.block-aa-text').forEach(aaElement => {
+        aaElement.addEventListener('click', () => {
+            const blockId = aaElement.dataset.blockId; 
+            const blockColorData = currentPalette.blocks[parseInt(blockId, 10) - 1];
+            const textColorData = currentPalette[`text-color-${blockId}`];
+
+            if (blockColorData && textColorData) {
+                openReadabilityModal(blockColorData.hex, textColorData.hex);
+            } else {
+                console.error(`Kleurdata niet gevonden voor blok ${blockId} of tekstkleur text-color-${blockId}`);
+                openReadabilityModal('#FFFFFF', '#000000');
+            }
+        });
+    });
+
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+        add3DHoverEffect(swatch);
+    });
+
 
     const modeRadios = document.querySelectorAll('input[name="palette-mode"]');
     modeRadios.forEach(radio => { radio.addEventListener('change', (event) => {
@@ -662,6 +843,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentPalette.tertiary = dynamicParts.tertiary;
                     currentPalette.quaternary = dynamicParts.quaternary;
                     currentPalette.blocks = [...dynamicParts.blocks];
+                    if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6
+                        currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
+                    }
                     updateUI(currentPalette);
                 }
             } else if (primaryInput) {

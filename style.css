@@ -1,3 +1,10 @@
+/* Voeg dit toe aan je bestaande style.css */
+
+.custom-pickr-app .pcr-app {
+  z-index: 3000 !important; /* Of een andere hoge waarde die boven je header ligt */
+}
+
+/* Algemene body stijlen etc. blijven zoals ze waren */
 body {
     font-family: 'Inter', sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -52,12 +59,11 @@ html.dark p {
     border-radius: 0.5rem;
     font-weight: 500;
     font-size: 0.875rem;
-    /* Adjusted transition for smoother transform and background-color changes */
     transition: transform 0.1s ease-out, background-color 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: relative;
     overflow: visible;
-    transform-style: preserve-3d; /* Allow children to be transformed in 3D space */
+    transform-style: preserve-3d; 
 }
 html.dark .color-swatch {
     box-shadow: 0 2px 4px rgba(0,0,0,0.3); 
@@ -72,7 +78,7 @@ html.dark .color-swatch {
     position: relative; 
 }
 
-.standard-color-swatch { /* Deze klasse wordt gebruikt door Grijstinten, Alerts, Tekstkleuren en de Globale Kleuren */
+.standard-color-swatch { 
     height: 140px; 
     padding-bottom: 30px; 
 }
@@ -84,7 +90,7 @@ html.dark .color-swatch {
     position: absolute; 
     top: 30%; 
     left: 50%;
-    transform: translate(-50%, -50%) translateZ(20px); /* Add translateZ for a slight 3D pop */
+    transform: translate(-50%, -50%) translateZ(20px); 
     line-height: 1; 
     z-index: 5; 
     pointer-events: auto; 
@@ -102,7 +108,7 @@ html.dark .color-swatch {
     align-items: center;
     gap: 1px;
     z-index: 10; 
-    transform: translateZ(10px); /* Bring text slightly forward */
+    transform: translateZ(10px); 
 }
 
 .block-color-swatch .swatch-text-wrapper {
@@ -152,7 +158,7 @@ html.dark .swatch-label:hover {
     position: absolute;
     bottom: 5px; 
     left: 50%;
-    transform: translateX(-50%) translateZ(5px); /* Bring input slightly forward */
+    transform: translateX(-50%) translateZ(5px); 
     width: 80%;
     max-width: 100px;
     padding: 2px 4px;
@@ -198,7 +204,7 @@ html.dark #instruction {
     opacity: 0; pointer-events: none;
 }
 .copy-message {
-    position: absolute; top: 5px; left: 50%; transform: translateX(-50%) translateZ(25px); /* Bring copy message forward */
+    position: absolute; top: 5px; left: 50%; transform: translateX(-50%) translateZ(25px); 
     background-color: rgba(0, 0, 0, 0.8); color: white; padding: 4px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; opacity: 0; transition: opacity 0.3s ease-out, transform 0.3s ease-out; pointer-events: none; z-index: 20;
 }
 html.dark .copy-message {

@@ -3,6 +3,12 @@ let currentPalette = {}; // Wordt gevuld bij initialisatie
 let currentMode = 'automatic';
 let currentColorHarmony = 'monochromatic';
 
+// Globale variabele om de actieve Pickr instantie en het bijbehorende input element bij te houden
+let activePickrInstance = null;
+let currentPickrInputElement = null; // Het ECHTE input element waar de gebruiker op klikt
+let pickrDummyElement = null; // Het dummy element dat Pickr als 'el' gebruikt
+
+
 // Thema variabelen
 const themeToggle = document.getElementById('theme-toggle');
 const themeIconLight = document.getElementById('theme-icon-light');
@@ -47,7 +53,7 @@ const defaultStandardColors = {
     'global-button-background-color': { hex: '#4F46E5', label: 'Button-bg-color' },
     'global-button-background-color-hover': { hex: '#4338CA', label: 'Button-bg-hover' },
     'global-button-text-color': { hex: '#FFFFFF', label: 'Button-text-color' },
-    'global-site-bg-color': { hex: '#FFFFFF', label: 'Site-bg-color' }, // Hernoemd en standaard naar wit
+    'global-site-bg-color': { hex: '#FFFFFF', label: 'Site-bg-color' },
 };
 
 // Basis ID's voor alle kleurvakken
@@ -61,7 +67,7 @@ const swatchBaseIds = [
 const jsonTypeToIdMap = {
     "Primary": "primary", "Secondary": "secondary", "Tertiary": "tertiary", "Quaternary": "quaternary",
     "Section-bg-one": "block-1", "Section-bg-two": "block-2", "Section-bg-three": "block-3",
-    "Section-bg-four": "block-4", "Section-bg-five": "block-5", "Section-bg-white": "block-6", // Label voor block-6 blijft "Section-bg-white" voor compatibiliteit
+    "Section-bg-four": "block-4", "Section-bg-five": "block-5", "Section-bg-white": "block-6",
     "Text-color-1": "text-color-1", "Text-color-2": "text-color-2", "Text-color-3": "text-color-3",
     "Text-color-4": "text-color-4", "Text-color-5": "text-color-5", "Text-color-6": "text-color-6",
     "Grey-tone-1": "grey-tone-1", "Grey-tone-2": "grey-tone-2", "Grey-tone-3": "grey-tone-3",
@@ -75,9 +81,171 @@ const jsonTypeToIdMap = {
     "Button-bg-color": "global-button-background-color",
     "Button-bg-hover": "global-button-background-color-hover",
     "Button-text-color": "global-button-text-color",
-    "Site-bg-color": "global-site-bg-color", // Nieuwe mapping
+    "Site-bg-color": "global-site-bg-color",
 };
 const idToJsonTypeMap = Object.fromEntries(Object.entries(jsonTypeToIdMap).map(([key, value]) => [value, key]));
+
+// --- Pickr Functies ---
+function destroyActivePickr() {
+    if (activePickrInstance) {
+        console.log("Destroying active Pickr for:", currentPickrInputElement ? currentPickrInputElement.id : 'unknown input');
+        activePickrInstance.off('init').off('show').off('hide').off('save').off('change');
+        activePickrInstance.destroyAndRemove(); 
+        activePickrInstance = null;
+    }
+    if (pickrDummyElement && pickrDummyElement.parentNode) {
+        console.log("Removing dummy Pickr element.");
+        pickrDummyElement.parentNode.removeChild(pickrDummyElement);
+        pickrDummyElement = null;
+    }
+    currentPickrInputElement = null; 
+}
+
+function openColorPicker(inputElement) { 
+    console.log(`Attempting to open Pickr for REAL input: ${inputElement.id}, Disabled: ${inputElement.disabled}`);
+
+    if (typeof Pickr === 'undefined') {
+        console.error('Pickr class is not defined! Make sure pickr.min.js is loaded.');
+        return;
+    }
+
+    if (!inputElement || inputElement.disabled) {
+        console.log("REAL Input element is disabled or not found. Pickr not opened.");
+        return;
+    }
+    
+    destroyActivePickr(); 
+
+    currentPickrInputElement = inputElement; 
+    const initialColor = inputElement.value || '#FFFFFF';
+
+    pickrDummyElement = document.createElement('div');
+    pickrDummyElement.style.position = 'absolute';
+    const inputRect = inputElement.getBoundingClientRect();
+    pickrDummyElement.style.left = `${inputRect.left + window.scrollX}px`;
+    pickrDummyElement.style.top = `${inputRect.bottom + window.scrollY + 5}px`;
+    pickrDummyElement.style.width = '1px';
+    pickrDummyElement.style.height = '1px';
+    pickrDummyElement.style.opacity = '0'; 
+    document.body.appendChild(pickrDummyElement); 
+
+    console.log(`Initializing Pickr. Original input: ${inputElement.id}, Dummy el for Pickr:`, pickrDummyElement);
+
+    activePickrInstance = Pickr.create({
+        el: pickrDummyElement, 
+        container: document.body, 
+        theme: 'classic', 
+        default: initialColor,
+        useAsButton: true, 
+        appClass: 'custom-pickr-app', 
+        position: 'bottom-start', 
+
+        components: {
+            preview: true,
+            opacity: false,
+            hue: true,
+            interaction: {
+                hex: true,
+                rgba: false, 
+                hsla: false,
+                hsva: false,
+                cmyk: false,
+                input: true, 
+                clear: false, 
+                save: true  
+            }
+        },
+        strings: {
+            save: 'OK', 
+        }
+    });
+
+    activePickrInstance.on('init', instance => {
+        console.log('Pickr init, related to real input:', currentPickrInputElement.id);
+    }).on('show', instance => { 
+        console.log('Pickr show event, related to real input:', currentPickrInputElement.id);
+        if (activePickrInstance) {
+            const pickerRoot = activePickrInstance.getRoot().app; 
+            if (pickerRoot) {
+                pickerRoot.style.zIndex = '3000'; 
+                console.log('Pickr app element z-index set to 3000', pickerRoot);
+            } else {
+                console.error('Pickr root app element not found in "show" event using activePickrInstance.');
+            }
+        } else {
+            console.error('activePickrInstance is null in "show" event.');
+        }
+    }).on('hide', instance => {
+        console.log('Pickr hide event, related to real input:', currentPickrInputElement ? currentPickrInputElement.id : 'unknown');
+        if (instance === activePickrInstance) {
+            destroyActivePickr();
+        } else {
+            console.warn("Hide event for a non-active or already destroyed Pickr instance.");
+        }
+    }).on('save', (color, instance) => {
+        console.log('Pickr save event. Real input:', currentPickrInputElement.id);
+        if (color && currentPickrInputElement) {
+            const hexColor = color.toHEXA().toString(0); 
+            currentPickrInputElement.value = hexColor; 
+            
+            const changeEvent = new Event('change', { bubbles: true });
+            currentPickrInputElement.dispatchEvent(changeEvent); 
+        }
+        instance.hide(); 
+    }).on('change', (color, source, instance) => { // Live update
+        if (color && currentPickrInputElement) {
+            const hexColor = color.toHEXA().toString(0);
+            currentPickrInputElement.value = hexColor; // Update ECHTE input live
+
+            const baseId = currentPickrInputElement.dataset.baseId;
+            if (baseId) {
+                const colorData = createColorDataFromHex(hexColor);
+                if (colorData) {
+                    // Update de currentPalette direct voor de live update
+                    if (baseId.startsWith('block-')) {
+                        const index = parseInt(baseId.split('-')[1], 10) - 1;
+                        if (currentPalette.blocks && currentPalette.blocks[index]) {
+                            currentPalette.blocks[index] = colorData;
+                            if (baseId === 'block-6') {
+                                currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(colorData));
+                            }
+                        }
+                    } else {
+                        currentPalette[baseId] = colorData;
+                        if (baseId === 'global-site-bg-color') {
+                            if (currentPalette.blocks && currentPalette.blocks[5]) {
+                                currentPalette.blocks[5] = JSON.parse(JSON.stringify(colorData));
+                            }
+                        }
+                    }
+                    
+                    // Als het de primaire kleur is die verandert EN de modus is 'lockPrimary' of 'manual',
+                    // regenereer dan de afgeleide kleuren live.
+                    if (baseId === 'primary' && (currentMode === 'lockPrimary' || currentMode === 'manual')) {
+                        console.log("Live updating derived palette from primary color change in Pickr.");
+                        const dynamicParts = generateDynamicPaletteParts(colorData.hsl, currentColorHarmony);
+                        // currentPalette.primary is al bijgewerkt
+                        currentPalette.secondary = dynamicParts.secondary;
+                        currentPalette.tertiary = dynamicParts.tertiary;
+                        currentPalette.quaternary = dynamicParts.quaternary;
+                        currentPalette.blocks = [...dynamicParts.blocks];
+                        if (currentPalette.blocks[5]) { 
+                            currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
+                        }
+                        updateUI(currentPalette); // Update de gehele UI
+                    } else {
+                        // Voor andere kleuren, update alleen de specifieke swatch en de gecombineerde swatch.
+                        updateSwatchUI(baseId, colorData);
+                        updateCombinedSwatch();
+                    }
+                }
+            }
+        }
+    });
+
+    console.log("Calling activePickrInstance.show() for dummy el, related to " + inputElement.id);
+    activePickrInstance.show();
+}
 
 
 // --- Thema Functies ---
@@ -89,23 +257,11 @@ function applyTheme(theme) {
         htmlElement.classList.add('dark');
         if (themeIconLight) themeIconLight.classList.add('hidden');
         if (themeIconDark) themeIconDark.classList.remove('hidden');
-        // Pas de donkere achtergrondkleur toe als die gedefinieerd is
-        if (currentPalette && currentPalette['global-site-bg-color'] && defaultStandardColors['global-site-bg-color-dark']) { // Check of de dark variant bestaat
-             // Voor nu gebruiken we de CSS :root variabelen of directe styling via html.dark
-        } else {
-            // Fallback als de specifieke donkere site bg niet is ingesteld in het palet
-            // De .dark class op body regelt dit via CSS
-        }
     } else {
         htmlElement.classList.remove('dark');
         if (themeIconLight) themeIconLight.classList.remove('hidden');
         if (themeIconDark) themeIconDark.classList.add('hidden');
-        // Pas de lichte achtergrondkleur toe
-        if (currentPalette && currentPalette['global-site-bg-color']) {
-            bodyElement.style.backgroundColor = currentPalette['global-site-bg-color'].hex;
-        }
     }
-    // Update body background color based on the new global-site-bg-color and current theme
     updateBodyBackgroundColor();
 }
 
@@ -114,15 +270,12 @@ function updateBodyBackgroundColor() {
     const isDarkMode = document.documentElement.classList.contains('dark');
 
     if (isDarkMode) {
-        // In dark mode, de CSS `html.dark body` regelt de achtergrond.
-        // We kunnen hier eventueel een specifieke 'site-bg-dark' uit het palet gebruiken als die bestaat.
-        // Voor nu laten we de CSS dit afhandelen.
-        bodyElement.style.backgroundColor = ''; // Reset inline style zodat CSS class werkt
+        bodyElement.style.backgroundColor = '';
     } else {
         if (currentPalette && currentPalette['global-site-bg-color'] && currentPalette['global-site-bg-color'].hex) {
             bodyElement.style.backgroundColor = currentPalette['global-site-bg-color'].hex;
         } else {
-            bodyElement.style.backgroundColor = defaultStandardColors['global-site-bg-color'].hex; // Fallback
+            bodyElement.style.backgroundColor = defaultStandardColors['global-site-bg-color'].hex;
         }
     }
 }
@@ -161,13 +314,13 @@ function openReadabilityModal(backgroundColorHex, textColorHex) {
     modalParagraph2.style.color = textColorHex;
 
     const modalBgRgb = hexToRgb(backgroundColorHex);
-    if (modalBgRgb && modalCloseButton) { 
+    if (modalBgRgb && modalCloseButton) {
         const closeButtonContrastColor = getContrastColor(modalBgRgb[0], modalBgRgb[1], modalBgRgb[2]);
         modalCloseButton.style.color = closeButtonContrastColor;
     }
 
     readabilityModal.classList.remove('hidden');
-    readabilityModal.classList.add('flex'); 
+    readabilityModal.classList.add('flex');
 }
 
 function closeReadabilityModal() {
@@ -178,12 +331,12 @@ function closeReadabilityModal() {
 
 // --- 3D Hover Effect Functie ---
 function add3DHoverEffect(element) {
-    const intensity = 10; 
+    const intensity = 10;
 
     element.addEventListener('mousemove', (e) => {
         const rect = element.getBoundingClientRect();
-        const x = e.clientX - rect.left; 
-        const y = e.clientY - rect.top;  
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
@@ -192,13 +345,13 @@ function add3DHoverEffect(element) {
         const deltaY = y - centerY;
 
         const rotateY = (deltaX / centerX) * intensity;
-        const rotateX = -(deltaY / centerY) * intensity; 
+        const rotateX = -(deltaY / centerY) * intensity;
 
-        element.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`; 
+        element.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`;
     });
 
     element.addEventListener('mouseleave', () => {
-        element.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)'; 
+        element.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
     });
 }
 
@@ -228,7 +381,7 @@ function initializeCurrentPaletteWithDefaults() {
     currentPalette = {};
     for (const id in defaultStandardColors) {
         currentPalette[id] = createColorDataFromHex(defaultStandardColors[id].hex);
-        if (!currentPalette[id]) { 
+        if (!currentPalette[id]) {
             currentPalette[id] = { hex: '#FF0000', rgb: [255,0,0], hsl: {h:0,s:100,l:50}, contrastColor: '#FFFFFF', rgbSpaceString: '255 0 0'};
         }
     }
@@ -239,11 +392,10 @@ function initializeCurrentPaletteWithDefaults() {
         currentPalette.tertiary = dynamicParts.tertiary;
         currentPalette.quaternary = dynamicParts.quaternary;
         currentPalette.blocks = [...dynamicParts.blocks];
-        // Koppel global-site-bg-color aan block-6
         if (currentPalette.blocks[5]) {
-            currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5])); // Diepe kopie
+            currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
         }
-    } else { 
+    } else {
         const fallbackDynamic = generateDynamicPaletteParts(null, 'monochromatic');
         currentPalette.primary = fallbackDynamic.primary;
         currentPalette.secondary = fallbackDynamic.secondary;
@@ -254,7 +406,7 @@ function initializeCurrentPaletteWithDefaults() {
             currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
         }
     }
-    updateBodyBackgroundColor(); // Pas body achtergrond aan na initialisatie
+    updateBodyBackgroundColor();
 }
 
 function generateDynamicPaletteParts(lockedPrimaryHsl = null, harmonyType = currentColorHarmony) {
@@ -343,7 +495,7 @@ function generateDynamicPaletteParts(lockedPrimaryHsl = null, harmonyType = curr
         dynamicPalette.blocks.push(generateColor(qHue, getRandomInt(Math.max(10, qSat - 35), qSat -20), getRandomInt(Math.max(20, qLight - 30), Math.max(30, qLight -20))));
         dynamicPalette.blocks.push(generateColor(pHueGen, getRandomInt(15, 30), getRandomInt(90, 96)));
         if (Math.random() < 0.15) { dynamicPalette.blocks.push(generateColor(pHueGen, getRandomInt(0, 5), getRandomInt(98, 99))); }
-        else { dynamicPalette.blocks.push(generateColor(0, 0, 100)); } // Default block-6 to white
+        else { dynamicPalette.blocks.push(generateColor(0, 0, 100)); }
     }
     dynamicPalette.blocks = dynamicPalette.blocks.filter(Boolean);
     while (dynamicPalette.blocks.length < 6) {
@@ -371,14 +523,14 @@ function updateSwatchUI(baseId, colorData) {
         hexElementId = `${baseId}-hex`;
         inputElementId = `${baseId}-input`;
         rgbElementId = `${baseId}-rgb`;
-    } else { 
+    } else {
         hexElementId = `${baseId}-hex`;
         inputElementId = `${baseId}-input`;
         rgbElementId = `${baseId}-rgb`;
     }
 
     const hexElement = document.getElementById(hexElementId);
-    const inputElement = document.getElementById(inputElementId);
+    const inputElement = document.getElementById(inputElementId); 
     const rgbElement = document.getElementById(rgbElementId);
 
     if (!swatchElement || !hexElement || !inputElement || !rgbElement) {
@@ -392,40 +544,63 @@ function updateSwatchUI(baseId, colorData) {
     inputElement.classList.remove('invalid');
     const textElements = swatchElement.querySelectorAll('.swatch-text');
     textElements.forEach(el => { if (!el.classList.contains('swatch-label')) { el.style.color = colorData.contrastColor; } });
-    
-    hexElement.onclick = null; 
+
+    hexElement.onclick = null;
     hexElement.onclick = (event) => { event.stopPropagation(); copyToClipboard(colorData.hex.replace('#', ''), swatchElement, "HEX"); };
-    
-    rgbElement.onclick = null; 
+
+    rgbElement.onclick = null;
     rgbElement.onclick = (event) => { event.stopPropagation(); copyToClipboard(colorData.rgbSpaceString, swatchElement, "RGB"); };
 
-    if (baseId.startsWith('block-')) {
-        const blockIndex = baseId.split('-')[1]; 
+    // Update "Aa" text in block-* if a text-color-* is being updated
+    if (baseId.startsWith('text-color-')) {
+        const textIndex = baseId.split('-')[2]; // Haal het nummer van de text-color (1-6)
+        const targetBlockSwatchId = `block-${textIndex}-color`; // Bouw het ID van de corresponderende block-swatch
+        const targetBlockSwatch = document.getElementById(targetBlockSwatchId);
+        if (targetBlockSwatch) {
+            const aaTextElement = targetBlockSwatch.querySelector('.block-aa-text');
+            if (aaTextElement) {
+                aaTextElement.style.color = colorData.hex; // Update de "Aa" tekst met de nieuwe tekstkleur
+                console.log(`Updated Aa text for block-${textIndex} with color ${colorData.hex}`);
+            }
+        }
+    } 
+    // Update "Aa" text in a specific block-* if that block-* is being updated (om de juiste contrastkleur te behouden)
+    else if (baseId.startsWith('block-')) {
+        const blockIndex = baseId.split('-')[1];
         const aaTextElement = swatchElement.querySelector('.block-aa-text');
         if (aaTextElement) {
             const correspondingTextColorId = `text-color-${blockIndex}`;
             if (currentPalette[correspondingTextColorId] && currentPalette[correspondingTextColorId].hex) {
                 aaTextElement.style.color = currentPalette[correspondingTextColorId].hex;
             } else {
-                aaTextElement.style.color = '#000000'; 
-                console.warn(`Corresponding text color ${correspondingTextColorId} not found for ${baseId}. Aa text set to black.`);
+                // Fallback als de tekstkleur niet gevonden is (zou niet moeten gebeuren)
+                aaTextElement.style.color = getContrastColor(colorData.rgb[0], colorData.rgb[1], colorData.rgb[2]); 
             }
         }
     }
-    
-    // Als global-site-bg-color wordt bijgewerkt, update de body achtergrond
+
+
     if (baseId === 'global-site-bg-color') {
         updateBodyBackgroundColor();
     }
 
-
     const isStandardColor = defaultStandardColors.hasOwnProperty(baseId);
-    if (isStandardColor) { 
+    if (isStandardColor) {
         inputElement.disabled = false;
-    } else { 
+    } else {
         if (currentMode === 'automatic') { inputElement.disabled = true; }
         else if (currentMode === 'manual') { inputElement.disabled = false; }
         else if (currentMode === 'lockPrimary') { inputElement.disabled = (baseId !== 'primary'); }
+    }
+
+    // Update Pickr color if it's open for this input
+    if (activePickrInstance && currentPickrInputElement === inputElement) {
+        // Voorkom een oneindige loop door alleen te setten als de kleur echt anders is
+        const pickrCurrentColor = activePickrInstance.getColor().toHEXA().toString(0);
+        if (pickrCurrentColor.toUpperCase() !== colorData.hex.toUpperCase()) {
+            console.log(`Programmatic color change for ${inputElement.id}. Updating Pickr from ${pickrColor} to ${colorData.hex}`);
+            activePickrInstance.setColor(colorData.hex);
+        }
     }
 }
 
@@ -439,7 +614,7 @@ function updateUI(paletteToDisplay) {
                 colorData = paletteToDisplay.blocks[index];
             } else {
                 console.warn(`Block data missing for ${baseId} in paletteToDisplay.blocks:`, paletteToDisplay.blocks);
-                colorData = createColorDataFromHex("#CCCCCC"); 
+                colorData = createColorDataFromHex("#CCCCCC");
             }
         } else {
             colorData = paletteToDisplay[baseId];
@@ -453,17 +628,17 @@ function updateUI(paletteToDisplay) {
             if (defaultColorInfo) {
                 colorData = createColorDataFromHex(defaultColorInfo.hex);
             } else {
-                colorData = createColorDataFromHex("#FF00FF"); 
+                colorData = createColorDataFromHex("#FF00FF");
             }
             if (colorData) {
-                 updateSwatchUI(baseId, colorData);
+                updateSwatchUI(baseId, colorData);
             } else {
                 console.error(`CRITICAL: Fallback color creation failed for ${baseId}`);
             }
         }
     });
     updateCombinedSwatch();
-    updateBodyBackgroundColor(); // Zorg ervoor dat de body achtergrond ook wordt bijgewerkt
+    updateBodyBackgroundColor();
 }
 
 
@@ -484,7 +659,7 @@ function exportPaletteToJson() {
     ['primary', 'secondary', 'tertiary', 'quaternary'].forEach(id => {
         if (currentPalette[id]) {
             colorsArray.push({
-                type: idToJsonTypeMap[id] || id, 
+                type: idToJsonTypeMap[id] || id,
                 hex: currentPalette[id].hex.replace('#', ''),
                 rgb: currentPalette[id].rgbSpaceString
             });
@@ -493,16 +668,16 @@ function exportPaletteToJson() {
     if (currentPalette.blocks && currentPalette.blocks.length === 6) {
         currentPalette.blocks.forEach((blockColor, index) => {
             const blockId = `block-${index + 1}`;
-            const type = idToJsonTypeMap[blockId] || blockId; 
+            const type = idToJsonTypeMap[blockId] || blockId;
             if (blockColor) {
                 colorsArray.push({ type: type, hex: blockColor.hex.replace('#',''), rgb: blockColor.rgbSpaceString });
             }
         });
     }
-    for (const id in defaultStandardColors) { 
+    for (const id in defaultStandardColors) {
         if (currentPalette[id]) {
             colorsArray.push({
-                type: defaultStandardColors[id].label, 
+                type: defaultStandardColors[id].label,
                 hex: currentPalette[id].hex.replace('#',''),
                 rgb: currentPalette[id].rgbSpaceString
             });
@@ -539,13 +714,12 @@ function importPaletteFromJson(event) {
             initializeCurrentPaletteWithDefaults(); 
             Object.assign(newImportedPalette, currentPalette); 
 
-            let allColorsValid = true;
             importedObject.colors.forEach(item => {
                 if (typeof item.type !== 'string' || typeof item.hex !== 'string' || typeof item.rgb !== 'string') {
-                    allColorsValid = false; console.warn("Ongeldig item structuur in JSON:", item); return;
+                     console.warn("Ongeldig item structuur in JSON:", item); return;
                 }
                 let baseId = jsonTypeToIdMap[item.type];
-                if (!baseId) { 
+                if (!baseId) {
                     for(const idKey in defaultStandardColors){
                         if(defaultStandardColors[idKey].label === item.type){
                             baseId = idKey;
@@ -556,58 +730,32 @@ function importPaletteFromJson(event) {
 
                 if (!baseId) { console.warn(`Onbekend kleurtype in JSON: ${item.type}`); return; }
                 const colorData = createColorDataFromHex("#" + item.hex);
-                if (!colorData) { allColorsValid = false; console.warn(`Ongeldige HEX ${item.hex} voor type ${item.type}`); return; }
+                if (!colorData) { console.warn(`Ongeldige HEX ${item.hex} voor type ${item.type}`); return; }
 
                 if (baseId.startsWith('block-')) {
                     const index = parseInt(baseId.split('-')[1], 10) - 1;
                     if (index >= 0 && index < 6) {
-                        if (!newImportedPalette.blocks) newImportedPalette.blocks = new Array(6).fill(null);
+                        if (!newImportedPalette.blocks) newImportedPalette.blocks = new Array(6).fill(null).map(() => createColorDataFromHex('#CCCCCC')); 
                         newImportedPalette.blocks[index] = colorData;
-                        // Als block-6 wordt geïmporteerd, update ook global-site-bg-color
                         if (baseId === 'block-6') {
                             newImportedPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(colorData));
                         }
                     } else {
-                        allColorsValid = false; console.warn(`Ongeldige block index voor ${baseId}`);
+                         console.warn(`Ongeldige block index voor ${baseId}`);
                     }
                 } else {
                     newImportedPalette[baseId] = colorData;
-                     // Als global-site-bg-color wordt geïmporteerd, update ook block-6
                     if (baseId === 'global-site-bg-color') {
-                        if (!newImportedPalette.blocks) newImportedPalette.blocks = new Array(6).fill(null);
+                        if (!newImportedPalette.blocks) newImportedPalette.blocks = new Array(6).fill(null).map(() => createColorDataFromHex('#CCCCCC'));
                         newImportedPalette.blocks[5] = JSON.parse(JSON.stringify(colorData));
                     }
                 }
             });
-
-            const dynamicColorKeys = ['primary', 'secondary', 'tertiary', 'quaternary'];
-            dynamicColorKeys.forEach(key => {
-                if (!newImportedPalette[key]) { 
-                    allColorsValid = false;
-                    console.warn(`Hoofdkleur ${key} mist in JSON. Standaardwaarde wordt behouden of opnieuw gegenereerd indien nodig.`);
-                }
-            });
-            if (!newImportedPalette.blocks || newImportedPalette.blocks.length !== 6 || newImportedPalette.blocks.some(b => !b)) {
-                console.warn("Blokkleuren data in JSON is incompleet of ongeldig. Herstelt op basis van primaire kleur (indien beschikbaar).");
-                const primaryHSLForBlockRegen = newImportedPalette.primary ? newImportedPalette.primary.hsl : null;
-                const tempDynamicParts = generateDynamicPaletteParts(primaryHSLForBlockRegen, currentColorHarmony);
-                newImportedPalette.blocks = tempDynamicParts.blocks;
-                if (newImportedPalette.blocks[5]) { // Zorg dat global-site-bg-color gesynchroniseerd blijft
-                    newImportedPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(newImportedPalette.blocks[5]));
-                }
-                if (!newImportedPalette.blocks || newImportedPalette.blocks.length !== 6 || newImportedPalette.blocks.some(b => !b)) {
-                    allColorsValid = false; console.error("Herstel van blokkleuren mislukt.");
-                }
-            }
-
-            if (!allColorsValid && !confirm("Sommige kleuren in het JSON-bestand waren ongeldig of ontbraken. Standaardwaarden worden gebruikt. Toch doorgaan met importeren?")) {
-                 event.target.value = null; 
-                 return; 
-            }
+            
             currentPalette = newImportedPalette;
-            setMode('manual'); updateUI(currentPalette);
-            if(allColorsValid) alert("Palet succesvol geïmporteerd!");
-            else alert("Palet geïmporteerd met enkele aanpassingen vanwege ongeldige of missende data.");
+            setMode('manual'); 
+            updateUI(currentPalette); 
+            alert("Palet succesvol geïmporteerd!");
 
         } catch (error) {
             console.error("Fout bij importeren JSON:", error); alert(`Fout bij importeren: ${error.message}`);
@@ -629,7 +777,7 @@ function handleHarmonyChange(event) {
     currentPalette.tertiary = dynamicParts.tertiary;
     currentPalette.quaternary = dynamicParts.quaternary;
     currentPalette.blocks = [...dynamicParts.blocks];
-    if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6
+    if (currentPalette.blocks[5]) {
         currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
     }
     updateUI(currentPalette);
@@ -637,7 +785,7 @@ function handleHarmonyChange(event) {
 
 function setMode(newMode) {
     currentMode = newMode;
-    const modeRadioToSelect = document.getElementById(`mode-${newMode.toLowerCase().replace('primary', '')}`);
+    const modeRadioToSelect = document.getElementById(`mode-${newMode.toLowerCase().replace('lockprimary', 'lock')}`);
     if (modeRadioToSelect) modeRadioToSelect.checked = true;
 
 
@@ -651,21 +799,35 @@ function setMode(newMode) {
         const inputElement = document.getElementById(inputElementId);
         if (inputElement) {
             const isStandardColor = defaultStandardColors.hasOwnProperty(baseId);
-            if (isStandardColor) { 
+            if (isStandardColor) {
                 inputElement.disabled = false;
-            } else { 
+            } else {
                 if (currentMode === 'automatic') { inputElement.disabled = true; }
                 else if (currentMode === 'manual') { inputElement.disabled = false; }
                 else if (currentMode === 'lockPrimary') { inputElement.disabled = (baseId !== 'primary'); }
             }
             inputElement.classList.remove('invalid');
+
+            if (inputElement.disabled && currentPickrInputElement === inputElement) {
+                destroyActivePickr();
+            }
         }
     });
 }
 
 function handleManualInputChange(event) {
     const inputElement = event.target;
-    let baseId = inputElement.id.substring(0, inputElement.id.lastIndexOf('-input'));
+    let baseId = inputElement.dataset.baseId;
+    if (!baseId) {
+      const tempId = inputElement.id.substring(0, inputElement.id.lastIndexOf('-input'));
+      if (inputElement.id.startsWith('block-input-')) {
+          baseId = `block-${inputElement.id.split('-')[2]}`;
+      } else {
+          baseId = tempId;
+      }
+    }
+
+
     const newHexWithHash = inputElement.value.startsWith('#') ? inputElement.value.toUpperCase() : '#' + inputElement.value.toUpperCase();
     if (!isValidHex(newHexWithHash)) { inputElement.classList.add('invalid'); return; }
     inputElement.classList.remove('invalid');
@@ -676,10 +838,8 @@ function handleManualInputChange(event) {
         const index = parseInt(baseId.split('-')[1], 10) - 1;
         if (currentPalette.blocks && index >= 0 && index < currentPalette.blocks.length) {
             currentPalette.blocks[index] = colorData;
-            // Als block-6 verandert, update global-site-bg-color
             if (baseId === 'block-6') {
                 currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(colorData));
-                updateSwatchUI('global-site-bg-color', currentPalette['global-site-bg-color']);
             }
         } else {
             console.error(`Invalid block index or blocks array not initialized for ${baseId}`);
@@ -687,43 +847,35 @@ function handleManualInputChange(event) {
         }
     } else {
         currentPalette[baseId] = colorData;
-        // Als global-site-bg-color verandert, update block-6
         if (baseId === 'global-site-bg-color') {
             if (currentPalette.blocks && currentPalette.blocks[5]) {
                 currentPalette.blocks[5] = JSON.parse(JSON.stringify(colorData));
-                updateSwatchUI('block-6', currentPalette.blocks[5]);
             }
         }
     }
 
-    updateSwatchUI(baseId, colorData); 
-
-    if (baseId === 'primary' && (currentMode === 'lockPrimary' || (currentMode === 'manual'))) {
+    if (baseId === 'primary' && (currentMode === 'lockPrimary' || currentMode === 'manual')) {
         const dynamicParts = generateDynamicPaletteParts(colorData.hsl, currentColorHarmony);
-        currentPalette.primary = dynamicParts.primary;
+        currentPalette.primary = colorData; 
         currentPalette.secondary = dynamicParts.secondary;
         currentPalette.tertiary = dynamicParts.tertiary;
         currentPalette.quaternary = dynamicParts.quaternary;
         currentPalette.blocks = [...dynamicParts.blocks];
-        if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6 na regeneratie
+        if (currentPalette.blocks[5]) { 
             currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
         }
         updateUI(currentPalette); 
-    } 
-    else if (baseId.startsWith('text-color-')) {
-        const textIndex = baseId.split('-')[2]; 
-        const targetBlockBaseId = `block-${textIndex}`;
-        const blockSwatchElement = document.getElementById(`${targetBlockBaseId}-color`);
-        
-        if (blockSwatchElement && currentPalette.blocks[parseInt(textIndex, 10) - 1]) {
-            const aaTextElement = blockSwatchElement.querySelector('.block-aa-text');
-            if (aaTextElement) {
-                aaTextElement.style.color = colorData.hex; 
-            }
+    } else {
+        updateSwatchUI(baseId, colorData); // Update alleen de specifieke swatch
+        updateCombinedSwatch(); // En de gecombineerde swatch
+    }
+
+    if (activePickrInstance && currentPickrInputElement === inputElement) {
+        const pickrColor = activePickrInstance.getColor().toHEXA().toString(0);
+        if (pickrColor.toUpperCase() !== newHexWithHash.toUpperCase()) {
+            console.log(`Manual input change for ${inputElement.id}. Updating Pickr from ${pickrColor} to ${newHexWithHash}`);
+            activePickrInstance.setColor(newHexWithHash);
         }
-    } 
-    else {
-        updateCombinedSwatch();
     }
 }
 
@@ -756,18 +908,18 @@ function triggerPaletteGeneration() {
             const colorData = createColorDataFromHex(primaryHexWithHash);
             if(colorData) {
                 baseHsl = colorData.hsl;
-                currentPalette.primary = colorData; 
+                currentPalette.primary = colorData;
             }
-             primaryInput.classList.remove('invalid');
+            primaryInput.classList.remove('invalid');
         } else { if(primaryInput) primaryInput.classList.add('invalid'); }
     }
     const dynamicParts = generateDynamicPaletteParts(baseHsl, currentColorHarmony);
-    currentPalette.primary = dynamicParts.primary; 
+    currentPalette.primary = dynamicParts.primary;
     currentPalette.secondary = dynamicParts.secondary;
     currentPalette.tertiary = dynamicParts.tertiary;
     currentPalette.quaternary = dynamicParts.quaternary;
     currentPalette.blocks = [...dynamicParts.blocks];
-    if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6
+    if (currentPalette.blocks[5]) {
         currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
     }
 
@@ -779,19 +931,26 @@ function triggerPaletteGeneration() {
 function handleKeyPress(event) {
     const activeElement = document.activeElement;
     const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT';
-    if (activeElement.id === 'palette-name' && event.code === 'Space') { return; } 
-    if (event.code === 'Space' && !isInputFocused) { event.preventDefault(); triggerPaletteGeneration(); }
+    if (activeElement.id === 'palette-name' && event.code === 'Space') { return; }
+    if (event.code === 'Space' && !isInputFocused) { event.preventDefault(); triggerPaletteGeneration(); destroyActivePickr(); } 
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeTheme(); 
+    console.log("DOM volledig geladen en geparsed.");
+    if (typeof Pickr === 'undefined') {
+        console.error('Pickr class is NIET gedefinieerd na DOMContentLoaded!');
+    } else {
+        console.log('Pickr class is WEL gedefinieerd na DOMContentLoaded.');
+    }
+
+    initializeTheme();
     document.body.tabIndex = -1; 
 
-    initializeCurrentPaletteWithDefaults(); // Dit roept ook updateBodyBackgroundColor aan
-    updateUI(currentPalette); // updateUI roept ook updateBodyBackgroundColor aan
-    setMode('automatic'); 
+    initializeCurrentPaletteWithDefaults();
+    updateUI(currentPalette);
+    setMode('automatic');
 
-    if (themeToggle) { 
+    if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
     }
 
@@ -808,7 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.block-aa-text').forEach(aaElement => {
         aaElement.addEventListener('click', () => {
-            const blockId = aaElement.dataset.blockId; 
+            const blockId = aaElement.dataset.blockId;
             const blockColorData = currentPalette.blocks[parseInt(blockId, 10) - 1];
             const textColorData = currentPalette[`text-color-${blockId}`];
 
@@ -838,12 +997,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lockedPrimaryData = createColorDataFromHex(primaryInput.value);
                 if(lockedPrimaryData) {
                     const dynamicParts = generateDynamicPaletteParts(lockedPrimaryData.hsl, currentColorHarmony);
-                    currentPalette.primary = dynamicParts.primary; 
+                    currentPalette.primary = lockedPrimaryData; 
                     currentPalette.secondary = dynamicParts.secondary;
                     currentPalette.tertiary = dynamicParts.tertiary;
                     currentPalette.quaternary = dynamicParts.quaternary;
                     currentPalette.blocks = [...dynamicParts.blocks];
-                    if (currentPalette.blocks[5]) { // Sync global-site-bg-color met block-6
+                    if (currentPalette.blocks[5]) {
                         currentPalette['global-site-bg-color'] = JSON.parse(JSON.stringify(currentPalette.blocks[5]));
                     }
                     updateUI(currentPalette);
@@ -866,20 +1025,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const inputElement = document.getElementById(inputElementId);
         if (inputElement) {
+            inputElement.dataset.baseId = baseId; 
+            console.log(`Event listener voor click toegevoegd aan: ${inputElement.id}`);
+            inputElement.addEventListener('click', function(event) { 
+                event.stopPropagation(); 
+                console.log(`Klik gedetecteerd op: ${this.id}`);
+                openColorPicker(this);
+            });
             inputElement.addEventListener('change', handleManualInputChange);
-            inputElement.addEventListener('focus', () => inputElement.classList.remove('invalid'));
-            inputElement.addEventListener('blur', () => { 
+            inputElement.addEventListener('focus', () => {
+                inputElement.classList.remove('invalid');
+            });
+            inputElement.addEventListener('blur', (event) => { 
                 if (inputElement.classList.contains('invalid')) {
                     const hexVal = inputElement.value.startsWith('#') ? inputElement.value : '#' + inputElement.value;
                     if (isValidHex(hexVal)) {
                         inputElement.classList.remove('invalid');
                     }
                 }
+                if (activePickrInstance && activePickrInstance.getRoot().app.contains(event.relatedTarget)) {
+                    return; 
+                }
             });
         } else {
             console.error(`Initial load: Input element not found for derived ID ${inputElementId} (from baseId ${baseId})`);
         }
     });
+
+    document.addEventListener('click', function(event) {
+        if (activePickrInstance && currentPickrInputElement) {
+            const pickerRootApp = activePickrInstance.getRoot().app;
+            if (pickerRootApp && !pickerRootApp.contains(event.target) && event.target !== currentPickrInputElement) {
+                if (pickrDummyElement && event.target === pickrDummyElement) {
+                    return;
+                }
+                console.log("Klik buiten actieve picker en input element. Pickr wordt gesloten.");
+                activePickrInstance.hide(); 
+            }
+        }
+    }, false); 
+
 
     window.addEventListener('keydown', handleKeyPress);
     const exportButton = document.getElementById('export-json-button');
@@ -897,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const instructionElement = document.getElementById('instruction');
     if (instructionElement && instructionElement.classList.contains('hidden')) {
-        instructionElement.classList.remove('hidden'); 
+        instructionElement.classList.remove('hidden');
     }
     instructionTimeout = setTimeout(() => {
         if (instructionElement) instructionElement.classList.add('hidden');
